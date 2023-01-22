@@ -1,5 +1,3 @@
-
-
 pipeline {
     agent none
     options {
@@ -32,7 +30,10 @@ pipeline {
                 }
             }
         }
-        stage('Deliver') { 
+        stage('Manual Approve'){
+                input message: 'Lanjutkan ke tahap Deploy? (Klik "Proceed" untuk melanjutkan eksekusi)'
+        }
+        stage('Deploy') { 
             agent any
             environment { 
                 VOLUME = '$(pwd)/sources:/src'
@@ -44,10 +45,15 @@ pipeline {
                     sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'" 
                 }
             }
-            post {
-                success {
+            steps {
                     archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals" 
                     sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
+                
+                }
+            post {
+                success {
+                    echo "Tunggu sesaat, aplikasi dengan di Deploy"
+                    sh 'sleep 60'
                 }
             }
         }
